@@ -1,16 +1,18 @@
 using System.Diagnostics.CodeAnalysis;
 using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Order;
 
 namespace SpanPerformanceCompare;
 
-[MemoryDiagnoser]
-[Orderer(BenchmarkDotNet.Order.SummaryOrderPolicy.FastestToSlowest)]
+[MemoryDiagnoser(displayGenColumns: true)]
+[HideColumns("StdDev", "Median", "Job", "RatioSD", "Error", "Ratio", "Alloc Ratio")]
+[Orderer(SummaryOrderPolicy.Method)]   
 [RankColumn]
 [ReturnValueValidator]
 [SuppressMessage("Performance", "CA1822:Mark members as static")]
 public class StringConcatenate
 {
-    [Benchmark(Description = "Use + operator")]
+    [Benchmark(Description = "+ operator")]
     public string UseStringConcatenate()
     {
         // ReSharper disable once ConvertToConstant.Local
@@ -23,7 +25,7 @@ public class StringConcatenate
         return firstName + " " + middleName + " " + lastName;
     }
 
-    [Benchmark(Baseline = true, Description = "Use string interpolation")]
+    [Benchmark(Description = "string interpolation")]
     public string UseStringInterpolation()
     {
         // ReSharper disable once ConvertToConstant.Local
@@ -82,7 +84,7 @@ public class StringConcatenate
         return sb.ToString();
     }
 
-    [Benchmark(Description = "Use Span<char>")]
+    [Benchmark(Description = "Span<char>")]
     public string UseSpanOfChar()
     {
         // ReSharper disable once ConvertToConstant.Local
