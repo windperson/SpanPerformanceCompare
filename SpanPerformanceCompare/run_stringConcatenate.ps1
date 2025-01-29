@@ -1,7 +1,7 @@
 #Requires -Version 7
 param(
     [string]$BenchmarkFilter = 'SpanPerformanceCompare.StringConcatenate.*',
-    [string[]]$NetRuntimes = @('net9.0', 'net8.0', 'net7.0', 'net6.0'),
+    [string[]]$NetRuntimes = @('net9.0'),
     [string]$BuildFramwework = 'net9.0'
 )
 $ErrorActionPreference = "Stop"
