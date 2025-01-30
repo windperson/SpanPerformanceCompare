@@ -5,6 +5,7 @@
         <TargetFrameworks>net9.0;net8.0;net7.0;net6.0</TargetFrameworks>
         <!-- disable .NET 7 is out of support build warning -->
         <NoWarn>NETSDK1138</NoWarn>
+        <LangVersion>latest</LangVersion>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <DebugType>pdbonly</DebugType>
@@ -14,6 +15,11 @@
 
     <ItemGroup>
         <PackageReference Include="BenchmarkDotNet" Version="0.14.0" />
+        <PackageReference Include="Bogus" Version="35.6.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="BenchmarkDotNet.Artifacts\**" />
     </ItemGroup>
 
 </Project>
