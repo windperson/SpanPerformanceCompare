@@ -1,15 +1,12 @@
 using System.Runtime.InteropServices;
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Jobs;
-using BenchmarkDotNet.Order;
 using Bogus;
 
 namespace SpanPerformanceCompare;
 
-[HideColumns("StdDev", "Median", "Job", "RatioSD", "Ratio", "Error", "Alloc Ratio")]
-[Orderer(SummaryOrderPolicy.FastestToSlowest)]
+[HideColumns("StdDev", "Median", "Job", "RatioSD", "Error", "Alloc Ratio")]
+[RankColumn]
 [ReturnValueValidator]
-[SimpleJob(RuntimeMoniker.Net80, baseline: true)]
 public class FasterIterateAsSpan
 {
     [Params(10, 100, 1000, 10_000, 100_000, 1000_000)]
@@ -31,7 +28,7 @@ public class FasterIterateAsSpan
         }
     }
 
-    [Benchmark(Description = "use normal for loop")]
+    [Benchmark(Description = "use normal for loop", Baseline = true)]
     public int UseNormalForLoop()
     {
         var sum = 0;
