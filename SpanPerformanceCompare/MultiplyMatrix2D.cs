@@ -12,7 +12,7 @@ namespace SpanPerformanceCompare;
 [ReturnValueValidator]
 public class MultiplyMatrix2D
 {
-    [Params(2, 3, 5, 10, 50, 100, 200, 500, 1000, 2000)]
+    [Params(2, 3, 10, 50, 100, 200, 500, 1000, 2000)]
     // ReSharper disable once UnassignedField.Global
     // ReSharper disable once InconsistentNaming
     public int Matrix_Size;
@@ -64,6 +64,47 @@ public class MultiplyMatrix2D
         {
             Console.WriteLine(e);
             throw;
+        }
+
+        return Convert2DArrayTo1D(result);
+    }
+
+    [Benchmark(Description = "int[,] & Parallel.For")]
+    public int[] MultiplyMatrixUsingParallelFor()
+    {
+        var rows1 = _matrix1.GetUpperBound(0);
+        var columns1 = _matrix1.GetUpperBound(1);
+        var columns2 = _matrix2.GetUpperBound(1);
+        var result = new int[rows1, columns2];
+
+        // Use ConcurrentQueue to enable safe enqueueing from multiple threads.
+        var exceptions = new ConcurrentQueue<Exception>();
+
+        Parallel.For(0, rows1, i =>
+        {
+            try
+            {
+                for (var j = 0; j < columns2; j++)
+                {
+                    var temp = 0;
+                    for (var k = 0; k < columns1; k++)
+                    {
+                        temp += _matrix1[i, k] * _matrix2[k, j];
+                    }
+
+                    result[i, j] = temp;
+                }
+            }
+            catch (Exception e)
+            {
+                exceptions.Enqueue(e);
+            }
+        });
+
+        if (!exceptions.IsEmpty)
+        {
+            Console.WriteLine("{0} Exception(s) occurred", exceptions.Count);
+            throw new AggregateException(exceptions);
         }
 
         return Convert2DArrayTo1D(result);
