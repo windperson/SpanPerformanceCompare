@@ -10,7 +10,7 @@ namespace SpanPerformanceCompare;
 [ReturnValueValidator(failOnError: true)]
 public class ExtractSubstring
 {
-    [Params(10, 100, 10_000, 100_000, 1000_000)]
+    [Params(10, 100, 1000, 10_000, 100_000, 1_000_000, 10_000_000)]
     // ReSharper disable once InconsistentNaming
     // ReSharper disable once UnassignedField.Global
     public int String_Length;
