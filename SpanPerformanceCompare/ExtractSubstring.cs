@@ -1,6 +1,6 @@
+using System.Text;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Configs;
-using BenchmarkDotNet.Order;
 
 namespace SpanPerformanceCompare;
 
@@ -10,7 +10,7 @@ namespace SpanPerformanceCompare;
 [ReturnValueValidator(failOnError: true)]
 public class ExtractSubstring
 {
-    [Params(10, 100, 1000, 10_000, 100_000, 1_000_000, 10_000_000)]
+    [Params(10, 100, 1000, 10_000, 100_000, 1_000_000)]
     // ReSharper disable once InconsistentNaming
     // ReSharper disable once UnassignedField.Global
     public int String_Length;
@@ -32,15 +32,25 @@ public class ExtractSubstring
         _length = endIndex - _startIndex;
     }
 
-    [Benchmark(Description = "Substring()")]
+    [Benchmark(Description = "string.Substring()")]
     public string UseSubstring()
     {
         return _inputString!.Substring(_startIndex, _length);
     }
 
-    [Benchmark(Description = "Span Slice")]
-    public string UseSpanSlice()
+    [Benchmark(Description = "Span Slice ToString")]
+    public string UseSpanSliceThenToString()
     {
         return _inputString.AsSpan().Slice(_startIndex, _length).ToString();
+    }
+
+    [Benchmark(Description = "Span Slice StreamWriter")]
+    public string UseSpanSliceThenStreamWriter()
+    {
+        var resultSpan = _inputString.AsSpan().Slice(_startIndex, _length);
+        var stringBuilder = new StringBuilder(resultSpan.Length);
+        using var streamWriter = new StringWriter(stringBuilder);
+        streamWriter.Write(resultSpan);
+        return stringBuilder.ToString();
     }
 }
