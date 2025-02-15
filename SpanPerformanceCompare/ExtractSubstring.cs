@@ -1,12 +1,14 @@
 using System.Text;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Configs;
+using BenchmarkDotNet.Order;
 
 namespace SpanPerformanceCompare;
 
 [MemoryDiagnoser(displayGenColumns: true)]
-[HideColumns("StdDev", "Median", "Job", "Ratio", "RatioSD", "Error", "Alloc Ratio")]
-[GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByJob)]
+[HideColumns("StdDev", "Median", "Job", "RatioSD", "Error")]
+[Orderer(SummaryOrderPolicy.Declared)]
+[GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByParams, BenchmarkLogicalGroupRule.ByJob)]
 [ReturnValueValidator(failOnError: true)]
 public class ExtractSubstring
 {
@@ -32,7 +34,7 @@ public class ExtractSubstring
         _length = endIndex - _startIndex;
     }
 
-    [Benchmark(Description = "string.Substring()")]
+    [Benchmark(Description = "string.Substring()", Baseline = true)]
     public string UseSubstring()
     {
         return _inputString!.Substring(_startIndex, _length);
