@@ -1,15 +1,18 @@
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Configs;
+using BenchmarkDotNet.Order;
 using Bogus;
 using CommunityToolkit.HighPerformance;
 
 namespace SpanPerformanceCompare;
 
 [MemoryDiagnoser(displayGenColumns: true)]
-[HideColumns("StdDev", "Median", "Job", "RatioSD", "Error", "Alloc Ratio")]
+[HideColumns("StdDev", "Median", "RatioSD", "Error")]
+[Orderer(SummaryOrderPolicy.Declared)]
+[GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByParams, BenchmarkLogicalGroupRule.ByJob)]
 [RankColumn]
-[ReturnValueValidator]
 public class MultiplyMatrix2D
 {
     [Params(2, 3, 10, 50, 100, 200, 500, 1000, 2000)]
@@ -38,39 +41,31 @@ public class MultiplyMatrix2D
     }
 
     [Benchmark(Description = "int[,]", Baseline = true)]
-    public int[] MultiplyMatrix()
+    public int[,] MultiplyMatrix()
     {
         var rows1 = _matrix1.GetUpperBound(0);
         var columns1 = _matrix1.GetUpperBound(1);
         var columns2 = _matrix2.GetUpperBound(1);
         var result = new int[rows1, columns2];
-        try
+        for (var i = 0; i < rows1; i++)
         {
-            for (var i = 0; i < rows1; i++)
+            for (var j = 0; j < columns2; j++)
             {
-                for (var j = 0; j < columns2; j++)
+                var temp = 0;
+                for (var k = 0; k < columns1; k++)
                 {
-                    var temp = 0;
-                    for (var k = 0; k < columns1; k++)
-                    {
-                        temp += _matrix1[i, k] * _matrix2[k, j];
-                    }
-
-                    result[i, j] = temp;
+                    temp += _matrix1[i, k] * _matrix2[k, j];
                 }
+
+                result[i, j] = temp;
             }
         }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-            throw;
-        }
 
-        return Convert2DArrayTo1D(result);
+        return result;
     }
 
     [Benchmark(Description = "int[,] & Parallel.For")]
-    public int[] MultiplyMatrixUsingParallelFor()
+    public int[,] MultiplyMatrixUsingParallelFor()
     {
         var rows1 = _matrix1.GetUpperBound(0);
         var columns1 = _matrix1.GetUpperBound(1);
@@ -107,11 +102,11 @@ public class MultiplyMatrix2D
             throw new AggregateException(exceptions);
         }
 
-        return Convert2DArrayTo1D(result);
+        return result;
     }
 
     [Benchmark(Description = "Span2D<int>")]
-    public int[] MultiplyMatrixUsingSpan()
+    public int[,] MultiplyMatrixUsingSpan()
     {
         var rows1 = _matrix1.GetUpperBound(0);
         var columns1 = _matrix1.GetUpperBound(1);
@@ -122,33 +117,25 @@ public class MultiplyMatrix2D
         var matrixASpan = _matrix1.AsSpan2D();
         var matrixBSpan = _matrix2.AsSpan2D();
 
-        try
+        for (var i = 0; i < rows1; i++)
         {
-            for (var i = 0; i < rows1; i++)
+            for (var j = 0; j < columns2; j++)
             {
-                for (var j = 0; j < columns2; j++)
+                var temp = 0;
+                for (var k = 0; k < columns1; k++)
                 {
-                    var temp = 0;
-                    for (var k = 0; k < columns1; k++)
-                    {
-                        temp += matrixASpan[i, k] * matrixBSpan[k, j];
-                    }
-
-                    resultSpan[i, j] = temp;
+                    temp += matrixASpan[i, k] * matrixBSpan[k, j];
                 }
+
+                resultSpan[i, j] = temp;
             }
         }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-            throw;
-        }
 
-        return Convert2DArrayTo1D(result);
+        return result;
     }
 
     [Benchmark(Description = "Memory2D<int> & Parallel.For")]
-    public int[] MultiplyMatrixUsingMemory()
+    public int[,] MultiplyMatrixUsingMemory()
     {
         var rows1 = _matrix1.GetUpperBound(0);
         var columns1 = _matrix1.GetUpperBound(1);
@@ -187,32 +174,6 @@ public class MultiplyMatrix2D
         {
             Console.WriteLine("{0} Exception(s) occurred", exceptions.Count);
             throw new AggregateException(exceptions);
-        }
-
-        return Convert2DArrayTo1D(result);
-    }
-
-    // We need to convert two-dimensional array into one-dimensional for BDN's ReturnValueValidator compare the results
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    private static T[] Convert2DArrayTo1D<T>(T[,] array2D)
-    {
-        var result = new T[array2D.Length];
-        var index = 0;
-
-        try
-        {
-            for (var i = 0; i < array2D.GetUpperBound(0); i++)
-            {
-                for (var j = 0; j < array2D.GetUpperBound(1); j++)
-                {
-                    result[index] = array2D[i, j];
-                    index++;
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex);
         }
 
         return result;
